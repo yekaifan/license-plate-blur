@@ -1,9 +1,8 @@
 import 'dart:typed_data';
-import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:onnxruntime/onnxruntime.dart';
 
-/// ONNX 推理服务 — 加载和管理车牌/人脸检测模型
+/// ONNX 推理服务
 class OnnxService {
   OrtSession? _plateSession;
   OrtSession? _faceSession;
@@ -11,18 +10,15 @@ class OnnxService {
 
   bool get isInitialized => _initialized;
 
-  /// 从 assets 加载模型
   Future<void> initialize() async {
     if (_initialized) return;
 
-    // 车牌检测模型
     final plateBytes = await rootBundle.load('assets/models/plate_detector.onnx');
     _plateSession = OrtSession.fromBuffer(
       plateBytes.buffer.asUint8List(),
       OrtSessionOptions(),
     );
 
-    // 人脸检测模型
     final faceBytes = await rootBundle.load(
       'assets/models/face_detection_yunet_2023mar.onnx',
     );
@@ -35,23 +31,30 @@ class OnnxService {
   }
 
   /// 车牌检测 (YOLOv8n)
-  /// 返回: List of [x1, y1, x2, y2, confidence]
-  Future<List<PlateBox>> detectPlates(Float32List input, int imgW, int imgH, {double threshold = 0.3}) async {
+  Future<List<PlateBox>> detectPlates(
+    Float32List input, int imgW, int imgH, {double threshold = 0.3}) async {
     if (_plateSession == null) return [];
 
     final shape = [1, 3, 640, 640];
     final inputTensor = OrtValueTensor.createTensorWithDataList(input, shape);
-    final outputs = _plateSession!.run({'images': inputTensor}, ['output0']);
 
-    final output = outputs['output0']?.value as List<List<double>>?;
+    final runOptions = OrtRunOptions();
+    runOptions.addInput('images', inputTensor);
+    runOptions.addOutput('output0');
+
+    final outputs = _plateSession!.run(runOptions);
     inputTensor.release();
-    for (final o in outputs.values) {
-      o.release();
+    runOptions.release();
+
+    if (outputs.isEmpty) return [];
+
+    final raw = outputs[0]?.tensorData as List<double>?;
+    for (final o in outputs) {
+      o?.release();
     }
 
-    if (output == null || output.isEmpty || output[0].isEmpty) return [];
-
-    return _parseYoloOutput(output[0], imgW, imgH, threshold);
+    if (raw == null) return [];
+    return _parseYoloOutput(raw, imgW, imgH, threshold);
   }
 
   /// 人脸检测 (YuNet)
@@ -60,66 +63,65 @@ class OnnxService {
 
     final shape = [1, 3, imgH, imgW];
     final inputTensor = OrtValueTensor.createTensorWithDataList(input, shape);
-    final outputs = _faceSession!.run({'input': inputTensor}, ['output']);
 
-    // YuNet outputs: 'output' with shape [n, 15]
-    final outputData = outputs.values.first.value;
+    final runOptions = OrtRunOptions();
+    runOptions.addInput('input', inputTensor);
+    runOptions.addOutput('output');
+
+    final outputs = _faceSession!.run(runOptions);
     inputTensor.release();
-    for (final o in outputs.values) {
-      o.release();
+    runOptions.release();
+
+    if (outputs.isEmpty) return [];
+
+    final data = outputs[0]?.tensorData;
+    for (final o in outputs) {
+      o?.release();
     }
 
-    if (outputData == null) return [];
+    if (data == null) return [];
 
-    // Parse face boxes from flat list
+    // YuNet: [n, 15] → 找 score > 0.5 的人脸
     final faces = <FaceBox>[];
-    final data = outputData is List ? outputData : (outputData as List<List<double>>);
-    
-    if (data.isEmpty) return faces;
-    
-    // YuNet output is [n, 15] where [0:4]=bbox, [4]=score, [5:15]=landmarks
-    final row = data is List<List<double>> ? data[0] : data;
-    if (row is List<double>) {
-      // Single face or flattened
-      final score = row.length > 4 ? row[4] : 0.0;
+    final list = data is List<double>
+        ? data
+        : (data as List<num>).map((e) => e.toDouble()).toList();
+
+    const step = 15;
+    for (int i = 0; i + step <= list.length; i += step) {
+      final score = list[i + 4];
       if (score > 0.5) {
         faces.add(FaceBox(
-          x: (row[0] as double) * imgW,
-          y: (row[1] as double) * imgH,
-          w: (row[2] as double) * imgW,
-          h: (row[3] as double) * imgH,
+          x: list[i] * imgW,
+          y: list[i + 1] * imgH,
+          w: list[i + 2] * imgW,
+          h: list[i + 3] * imgH,
           score: score,
         ));
       }
     }
-
     return faces;
   }
 
-  /// 解析 YOLOv8 输出 — 将 [1, 5, 8400] 转为检测框列表
   List<PlateBox> _parseYoloOutput(List<double> flat, int imgW, int imgH, double threshold) {
-    const numClasses = 1; // 只检测车牌
     const numBoxes = 8400;
-    
     final boxes = <PlateBox>[];
-    final scaleX = imgW / 640.0;
-    final scaleY = imgH / 640.0;
-    
+
     for (int i = 0; i < numBoxes; i++) {
-      final offset = i * (4 + numClasses);
+      final offset = i * 5; // [cx, cy, w, h, conf]
       if (offset + 4 >= flat.length) break;
-      
+
       final conf = flat[offset + 4];
       if (conf < threshold) continue;
-      
+
       final cx = flat[offset] / 640.0 * imgW;
       final cy = flat[offset + 1] / 640.0 * imgH;
       final w = flat[offset + 2] / 640.0 * imgW;
       final h = flat[offset + 3] / 640.0 * imgH;
-      
+
       final x = cx - w / 2;
       final y = cy - h / 2;
-      
+
       boxes.add(PlateBox(
         x: x.clamp(0, imgW.toDouble()),
         y: y.clamp(0, imgH.toDouble()),
@@ -128,7 +130,6 @@ class OnnxService {
         confidence: conf,
       ));
     }
-    
     return boxes;
   }
 
