@@ -101,14 +101,6 @@ class OpenCVRecipe(NDKRecipe):
                 self.get_build_dir(arch.arch),
                 _env=env)
 
-            # patch link.txt for unsupported flag
-            link_txt = 'modules/python3/CMakeFiles/opencv_python3.dir/link.txt'
-            with open(link_txt, 'r+') as f:
-                content = f.read().replace('-version', ' ')
-                f.seek(0)
-                f.write(content)
-                f.truncate()
-
             shprint(sh.make, '-j' + str(cpu_count()), 'opencv_python' + python_major)
             shprint(sh.cmake, '-DCOMPONENT=python', '-P', './cmake_install.cmake')
             sh.cp('-a', sh.glob('./lib/{}/lib*.so'.format(arch.arch)),
