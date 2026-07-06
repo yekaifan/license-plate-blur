@@ -1,0 +1,13 @@
+[project]
+name = "license-plate-blur"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "huggingface-hub>=1.22.0",
+    "opencv-contrib-python>=5.0.0.93",
+    "opencv-python-headless>=5.0.0.93",
+    "pillow>=12.3.0",
+    "pyside6>=6.11.1",
+    "ultralytics>=8.4.87",
+]

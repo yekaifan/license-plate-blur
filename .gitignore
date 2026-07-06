@@ -1,0 +1,27 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# User data / generated output
+input/*
+!input/.gitkeep
+output/*
+!output/.gitkeep
+
+# Test files
+_test_*
+
+# Buildozer build artifacts
+android_app/.buildozer/
+android_app/bin/
+
+# IDE
+.vscode/
+.idea/
