@@ -1,0 +1,29 @@
+name: plate_blur_app
+description: 车牌 & 人脸自动打码工具 — Flutter + ONNX Runtime
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  onnxruntime: ^1.19.0
+  image: ^4.5.0
+  file_picker: ^8.0.0
+  image_picker: ^1.0.0
+  path_provider: ^2.1.0
+  permission_handler: ^11.0.0
+  share_plus: ^10.0.0
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/models/

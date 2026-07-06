@@ -1,0 +1,41 @@
+name: 构建 Flutter APK
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'flutter_app/**'
+      - '.github/workflows/build-flutter-apk.yml'
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.7'
+          channel: 'stable'
+          cache: true
+
+      - name: 安装依赖
+        working-directory: flutter_app
+        run: flutter pub get
+
+      - name: 构建 APK (arm64)
+        working-directory: flutter_app
+        run: |
+          flutter build apk --release --target-platform android-arm64
+
+      - name: 上传 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: 车牌打码工具-Flutter-APK
+          path: flutter_app/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 90
