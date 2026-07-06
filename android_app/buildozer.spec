@@ -9,8 +9,8 @@ main.py = main.py
 version = 1.0.0
 
 # 应用要求
-requirements = python3,kivy,numpy,opencv-python-headless,pillow,ultralytics,huggingface_hub,plyer,android
-# opencv-python-headless 比完整版小，适合 Android
+requirements = python3,kivy,numpy,opencv,pillow,ultralytics,huggingface_hub,plyer,android
+# opencv 通过 p4a 配方编译（Android arm64 支持）
 # 启用摄像头
 android.permissions = CAMERA,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,INTERNET
 
