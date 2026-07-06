@@ -13,7 +13,7 @@ class OpenCVRecipe(NDKRecipe):
     version = '4.12.0'
     url = 'https://github.com/opencv/opencv/archive/{version}.zip'
     depends = ['numpy']
-    patches = ['patches/p4a_build.patch']
+    # patches 从原配方继承（p4a_build.patch 用于修复 CMake 构建）
     generated_libraries = [
         'libopencv_features2d.so', 'libopencv_imgproc.so', 'libopencv_stitching.so',
         'libopencv_calib3d.so', 'libopencv_flann.so', 'libopencv_ml.so',
