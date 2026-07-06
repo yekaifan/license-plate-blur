@@ -46,6 +46,9 @@ log_level = 2
 # 自动接受 SDK 许可
 android.accept_sdk_license = True
 
+# 使用本地 numpy 配方（v1.26.4，兼容 Android NDK）
+p4a.local_recipes = p4a_recipes/
+
 # 启用 AndroidX
 android.enable_androidx = True
 
