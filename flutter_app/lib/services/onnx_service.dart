@@ -19,7 +19,7 @@ class OnnxService {
     final plateBytes = await rootBundle.load('assets/models/plate_detector.onnx');
     _plateSession = OrtSession.fromBuffer(
       plateBytes.buffer.asUint8List(),
-      options: OrtSessionOptions(),
+      OrtSessionOptions(),
     );
 
     // 人脸检测模型
@@ -28,7 +28,7 @@ class OnnxService {
     );
     _faceSession = OrtSession.fromBuffer(
       faceBytes.buffer.asUint8List(),
-      options: OrtSessionOptions(),
+      OrtSessionOptions(),
     );
 
     _initialized = true;
@@ -41,7 +41,7 @@ class OnnxService {
 
     final shape = [1, 3, 640, 640];
     final inputTensor = OrtValueTensor.createTensorWithDataList(input, shape);
-    final outputs = _plateSession!.run({'images': inputTensor}, outputNames: ['output0']);
+    final outputs = _plateSession!.run({'images': inputTensor}, ['output0']);
 
     final output = outputs['output0']?.value as List<List<double>>?;
     inputTensor.release();
@@ -60,7 +60,7 @@ class OnnxService {
 
     final shape = [1, 3, imgH, imgW];
     final inputTensor = OrtValueTensor.createTensorWithDataList(input, shape);
-    final outputs = _faceSession!.run({'input': inputTensor}, outputNames: ['output']);
+    final outputs = _faceSession!.run({'input': inputTensor}, ['output']);
 
     // YuNet outputs: 'output' with shape [n, 15]
     final outputData = outputs.values.first.value;
