@@ -50,7 +50,11 @@ jobs:
 
       - name: 构建 APK
         working-directory: android_app
+        env:
+          PIP_CONSTRAINT: /tmp/numpy_constraint.txt
         run: |
+          # 强制 numpy<2（Android arm64 不支持 numpy 2.x）
+          echo "numpy<2" > /tmp/numpy_constraint.txt
           # 确保模型目录存在
           mkdir -p models
           # 如果没有预下载模型，构建时会自动下载
