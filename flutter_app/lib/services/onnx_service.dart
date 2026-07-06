@@ -36,15 +36,9 @@ class OnnxService {
     if (_plateSession == null) return [];
 
     final shape = [1, 3, 640, 640];
-    final inputTensor = OrtValueTensor.createTensorWithDataList(input, shape);
-
-    final runOptions = OrtRunOptions();
-    runOptions.addInput('images', inputTensor);
-    runOptions.addOutput('output0');
-
-    final outputs = _plateSession!.run(runOptions);
-    inputTensor.release();
-    runOptions.release();
+    final OrtValue tensor = OrtValueTensor.createTensorWithDataList(input, shape);
+    final outputs = _plateSession!.run({'images': tensor}, ['output0']);
+    tensor.release();
 
     if (outputs.isEmpty) return [];
 
@@ -62,15 +56,9 @@ class OnnxService {
     if (_faceSession == null) return [];
 
     final shape = [1, 3, imgH, imgW];
-    final inputTensor = OrtValueTensor.createTensorWithDataList(input, shape);
-
-    final runOptions = OrtRunOptions();
-    runOptions.addInput('input', inputTensor);
-    runOptions.addOutput('output');
-
-    final outputs = _faceSession!.run(runOptions);
-    inputTensor.release();
-    runOptions.release();
+    final OrtValue tensor = OrtValueTensor.createTensorWithDataList(input, shape);
+    final outputs = _faceSession!.run({'input': tensor}, ['output']);
+    tensor.release();
 
     if (outputs.isEmpty) return [];
 
@@ -81,7 +69,6 @@ class OnnxService {
 
     if (data == null) return [];
 
-    // YuNet: [n, 15] → 找 score > 0.5 的人脸
     final faces = <FaceBox>[];
     final list = data is List<double>
         ? data
@@ -108,7 +95,7 @@ class OnnxService {
     final boxes = <PlateBox>[];
 
     for (int i = 0; i < numBoxes; i++) {
-      final offset = i * 5; // [cx, cy, w, h, conf]
+      final offset = i * 5;
       if (offset + 4 >= flat.length) break;
 
       final conf = flat[offset + 4];
