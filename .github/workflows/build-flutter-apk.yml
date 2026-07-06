@@ -26,7 +26,9 @@ jobs:
 
       - name: 安装依赖
         working-directory: flutter_app
-        run: flutter pub get
+        run: |
+          flutter create --project-name plate_blur_app --org com.plateblur .
+          flutter pub get
 
       - name: 构建 APK (arm64)
         working-directory: flutter_app
