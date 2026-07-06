@@ -30,6 +30,10 @@ class NumpyRecipe(MesonRecipe):
         env = super().get_recipe_env(arch, **kwargs)
         env["_PYTHON_HOST_PLATFORM"] = arch.command_prefix
         env["NPY_DISABLE_SVML"] = "1"
+        # 显式设置 numpy include 路径，让 opencv 等依赖能找到头文件
+        env["NUMPY_INCLUDE_DIR"] = self.get_include(arch)
+        env["CFLAGS"] += f" -I{self.get_include(arch)}"
+        env["CXXFLAGS"] += f" -I{self.get_include(arch)}"
         env["TARGET_PYTHON_EXE"] = join(
             Recipe.get_recipe("python3", self.ctx).get_build_dir(arch.arch),
             "android-build",
