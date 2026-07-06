@@ -43,6 +43,9 @@ fullscreen = 0
 # 日志级别
 log_level = 2
 
+# 自动接受 SDK 许可
+android.accept_sdk_license = True
+
 # 启用 AndroidX
 android.enable_androidx = True
 
