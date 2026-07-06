@@ -101,7 +101,7 @@ class OpenCVRecipe(NDKRecipe):
                 self.get_build_dir(arch.arch),
                 _env=env)
 
-            shprint(sh.make, '-j' + str(cpu_count()), 'opencv_python' + python_major)
+            shprint(sh.make, '-j' + str(cpu_count()), 'opencv_python')
             shprint(sh.cmake, '-DCOMPONENT=python', '-P', './cmake_install.cmake')
             sh.cp('-a', sh.glob('./lib/{}/lib*.so'.format(arch.arch)),
                   self.ctx.get_libs_dir(arch.arch))
